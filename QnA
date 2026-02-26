@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Q&A Live – Dotazy přes QR</title>
+
+  <!-- Lucide (icons) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root{
+      /* Komerční banka palette (from publicly listed brand colors) */
+      --kb-red: #E00000;   /* primary accent */ /* [1](https://brandfetch.com/kb.cz) */
+      --kb-black: #020203; /* primary text */   /* [1](https://brandfetch.com/kb.cz) */
+      --kb-gray: #97A6B6;  /* secondary */      /* [1](https://brandfetch.com/kb.cz) */
+
+      --bg: #F6F7F9;
+      --card: #ffffff;
+      --muted: #5B6470;
+      --border: rgba(2,2,3,0.12);
+      --shadow: 0 10px 30px rgba(2,2,3,0.10);
+      --radius: 18px;
+      --radius-sm: 12px;
+
+      --focus: 0 0 0 4px rgba(224,0,0,0.18);
+      --tap: 48px;
+      --max: 1080px;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+    body{
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1000px 500px at 10% 0%, rgba(224,0,0,0.10), transparent 50%),
+                  radial-gradient(800px 450px at 90% 10%, rgba(151,166,182,0.22), transparent 55%),
+                  var(--bg);
+      color: var(--kb-black);
+    }
+
+    a{ color: inherit; }
+
+    .wrap{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 22px 16px 56px;
+    }
+
+    header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 2px 18px;
+    }
+
+    .brand{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logoMark{
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--kb-red), #ff3b3b);
+      box-shadow: 0 10px 24px rgba(224,0,0,0.22);
+      display: grid;
+      place-items: center;
+      color: white;
+      flex: 0 0 auto;
+    }
+
+    .brand h1{
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.1;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand p{
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .actions{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn{
+      height: var(--tap);
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--kb-black);
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 650;
+      font-size: 14px;
+      transition: transform .08s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+      user-select: none;
+    }
+    .btn:hover{
+      border-color: rgba(2,2,3,0.18);
+      box-shadow: 0 10px 22px rgba(2,2,3,0.08);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0px) scale(0.99); }
+    .btn:focus-visible{ outline: none; box-shadow: var(--focus); }
+
+    .btn.primary{
+      background: var(--kb-red);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 10px 22px rgba(224,0,0,0.22);
+    }
+    .btn.primary:hover{
+      background: #ff1f1f;
+      box-shadow: 0 12px 26px rgba(224,0,0,0.28);
+    }
+
+    .grid{
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 920px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .cardTitle{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .cardTitle h2{
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(2,2,3,0.10);
+      background: rgba(255,255,255,0.8);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .qrBox{
+      display: grid;
+      place-items: center;
+      padding: 14px 10px 10px;
+    }
+    #qrcode{
+      width: 240px;
+      height: 240px;
+      padding: 10px;
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid rgba(2,2,3,0.10);
+      box-shadow: 0 12px 28px rgba(2,2,3,0.10);
+      cursor: pointer;
+    }
+    #qrcode canvas, #qrcode img { border-radius: 10px; }
+
+    .qrHint{
+      margin-top: 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .linkRow{
+      display:flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .field{
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .label{
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    .input, textarea{
+      width: 100%;
+      border: 1px solid rgba(2,2,3,0.14);
+      background: rgba(255,255,255,0.88);
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-size: 15px;
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+    .input:focus, textarea:focus{
+      border-color: rgba(224,0,0,0.35);
+      box-shadow: var(--focus);
+    }
+
+    .mutedSmall{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .questionsHeader{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .questionsHeader h2{
+      margin:0;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+
+    .seg{
+      display:flex;
+      border: 1px solid rgba(2,2,3,0.12);
+      background: rgba(255,255,255,0.7);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .seg button{
+      height: 38px;
+      padding: 0 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .seg button.active{
+      background: rgba(224,0,0,0.10);
+      color: var(--kb-black);
+    }
+    .seg button:focus-visible{ outline: none; box-shadow: var(--focus); }
+
+    .list{
+      display: grid;
+      gap: 12px;
+    }
+    .q{
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(2,2,3,0.12);
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      position: relative;
+    }
+    .qTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .qText{
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+      word-break: break-word;
+    }
+
+    .qMeta{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+    .dot{ opacity: .6; }
+    .nameBadge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(2,2,3,0.10);
+      background: rgba(255,255,255,0.72);
+      font-weight: 700;
+    }
+
+    .likeBtn{
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(2,2,3,0.12);
+      background: rgba(255,255,255,0.75);
+      cursor: pointer;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 800;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .likeBtn:hover{
+      border-color: rgba(2,2,3,0.18);
+      transform: translateY(-1px);
+    }
+    .likeBtn:active{ transform: translateY(0px) scale(0.99); }
+    .likeBtn:focus-visible{ outline:none; box-shadow: var(--focus); }
+    .likeBtn.liked{
+      background: rgba(224,0,0,0.10);
+      border-color: rgba(224,0,0,0.22);
+    }
+    .likeCount{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 26px;
+      height: 26px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(2,2,3,0.06);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .empty{
+      text-align:center;
+      padding: 26px 14px;
+      color: var(--muted);
+    }
+
+    /* Modal */
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(2,2,3,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .backdrop.open{ display: flex; }
+
+    .modal{
+      width: min(680px, 100%);
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 22px;
+      box-shadow: 0 20px 60px rgba(2,2,3,0.35);
+      overflow: hidden;
+      transform: translateY(6px);
+      animation: pop .14s ease-out forwards;
+    }
+    @keyframes pop{
+      to { transform: translateY(0px); }
+    }
+
+    .modalHeader{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid rgba(2,2,3,0.10);
+      background: linear-gradient(180deg, rgba(224,0,0,0.08), transparent 70%);
+    }
+    .modalHeader h3{
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+    .iconBtn{
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(2,2,3,0.12);
+      background: rgba(255,255,255,0.75);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+    }
+    .iconBtn:focus-visible{ outline:none; box-shadow: var(--focus); }
+
+    .modalBody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap: 14px;
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 240px;
+      gap: 12px;
+    }
+    @media (max-width: 640px){
+      .row2{ grid-template-columns: 1fr; }
+    }
+
+    .modalFooter{
+      display:flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 16px 16px;
+      border-top: 1px solid rgba(2,2,3,0.10);
+      background: rgba(255,255,255,0.75);
+    }
+
+    .error{
+      display:none;
+      color: #b60000;
+      font-weight: 700;
+      font-size: 13px;
+      gap: 8px;
+      align-items:center;
+    }
+    .error.show{ display:flex; }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(2,2,3,0.92);
+      color: white;
+      padding: 12px 14px;
+      border-radius: 999px;
+      box-shadow: 0 16px 40px rgba(2,2,3,0.28);
+      display:none;
+      align-items:center;
+      gap: 10px;
+      z-index: 60;
+      font-weight: 700;
+      font-size: 13px;
+      max-width: calc(100% - 24px);
+    }
+    .toast.show{ display:flex; }
+
+    footer{
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: white;
+      font-weight: 800;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logoMark" aria-hidden="true">
+          <i data-lucide="messages-square"></i>
+        </div>
+        <div style="min-width:0">
+          <h1>Q&A Live – dotazy přes QR</h1>
+          <p id="subtitle">Nech publikum posílat otázky a hlasovat ❤️</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="copyLinkBtn" title="Zkopírovat odkaz pro účastníky">
+          <i data-lucide="copy"></i>
+          Kopírovat odkaz
+        </button>
+        <button class="btn primary" id="openAskBtn">
+          <i data-lucide="plus-circle"></i>
+          Položit dotaz
+        </button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left: QR -->
+      <section class="card">
+        <div class="cardTitle">
+          <h2>QR pro účastníky</h2>
+          <span class="pill" id="modePill">
+            <i data-lucide="radio"></i>
+            režim: společný
+          </span>
+        </div>
+
+        <div class="qrBox">
+          <div id="qrcode" role="button" tabindex="0" aria-label="Otevřít formulář pro dotaz"></div>
+
+          <div class="qrHint">
+            Načti QR kód a zeptej se. <br/>
+            Potom můžeš dát like otázkám, které nejvíc rezonují.
+          </div>
+
+          <div class="linkRow">
+            <button class="btn" id="openParticipantBtn" title="Otevře účastnický link v nové záložce">
+              <i data-lucide="external-link"></i>
+              Otevřít účastnický link
+            </button>
+          </div>
+
+          <div class="mutedSmall" style="text-align:center;">
+            Tip: Uložení dotazu <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Questions -->
+      <section class="card">
+        <div class="questionsHeader">
+          <h2>Dotazy <span id="count"></span></h2>
+
+          <div class="seg" aria-label="Řazení dotazů">
+            <button id="sortTop" class="active" type="button">
+              <i data-lucide="trending-up"></i>
+              Top
+            </button>
+            <button id="sortNew" type="button">
+              <i data-lucide="clock"></i>
+              Nejnovější
+            </button>
+          </div>
+        </div>
+
+        <div id="list" class="list"></div>
+      </section>
+    </div>
+
+    <footer>
+      MVP bez Firebase: data jsou teď uložená jen lokálně v prohlížeči (localStorage). Až přidáme Firebase, bude to real-time pro všechny.
+    </footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="backdrop" id="backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHeader">
+        <h3 id="modalTitle">Položit dotaz</h3>
+        <button class="iconBtn" id="closeBtn" aria-label="Zavřít">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modalBody">
+        <div class="error" id="error">
+          <i data-lucide="alert-triangle"></i>
+          <span id="errorText">Vyplň prosím dotaz.</span>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <div class="label">Dotaz</div>
+            <textarea id="questionInput" maxlength="280" placeholder="Napiš svůj dotaz (max 280 znaků)…"></textarea>
+            <div class="mutedSmall" id="charCount">0 / 280</div>
+          </div>
+
+          <div class="field">
+            <div class="label">Jméno (volitelné)</div>
+            <input id="nameInput" class="input" maxlength="60" placeholder="anonymně" />
+            <div class="mutedSmall">Když necháš prázdné, zobrazí se „anonymně“.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modalFooter">
+        <button class="btn" id="cancelBtn" type="button">
+          <i data-lucide="ban"></i>
+          Storno
+        </button>
+        <button class="btn primary" id="saveBtn" type="button">
+          <i data-lucide="save"></i>
+          Uložit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <i data-lucide="check-circle-2"></i>
+    <span id="toastText">Hotovo</span>
+  </div>
+
+  <script>
+    /**********************
+     * MVP storage + state
+     **********************/
+    const STORAGE_KEY = "qna_questions_v1";
+    const LIKES_KEY   = "qna_likes_v1";
+    const CLIENT_KEY  = "qna_client_id_v1";
+
+    const state = {
+      sort: "top", // "top" | "new"
+      questions: [],
+      likedMap: {}, // { [questionId]: true }
+      clientId: null
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+
+    // Try to keep multiple tabs in sync (same device).
+    const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("qna_live_channel") : null;
+    if (bc) {
+      bc.onmessage = (e) => {
+        if (e?.data?.type === "sync") {
+          loadAll();
+          render();
+        }
+      };
+    }
+
+    function uid() {
+      if (crypto && crypto.randomUUID) return crypto.randomUUID();
+      // fallback
+      return "id-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+    }
+
+    function loadAll(){
+      // client
+      state.clientId = localStorage.getItem(CLIENT_KEY) || uid();
+      localStorage.setItem(CLIENT_KEY, state.clientId);
+
+      // liked
+      try {
+        state.likedMap = JSON.parse(localStorage.getItem(LIKES_KEY) || "{}") || {};
+      } catch {
+        state.likedMap = {};
+      }
+
+      // questions
+      try {
+        state.questions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") || [];
+      } catch {
+        state.questions = [];
+      }
+    }
+
+    function saveQuestions(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.questions));
+      if (bc) bc.postMessage({ type: "sync" });
+    }
+
+    function saveLikes(){
+      localStorage.setItem(LIKES_KEY, JSON.stringify(state.likedMap));
+      if (bc) bc.postMessage({ type: "sync" });
+    }
+
+    function toast(msg){
+      $("#toastText").textContent = msg;
+      $("#toast").classList.add("show");
+      window.clearTimeout(toast._t);
+      toast._t = window.setTimeout(() => $("#toast").classList.remove("show"), 1600);
+    }
+
+    /**********************
+     * URL / QR generation
+     **********************/
+    function participantUrl(){
+      const u = new URL(window.location.href);
+      u.searchParams.set("ask", "1");
+      return u.toString();
+    }
+
+    function setModePill(){
+      const u = new URL(window.location.href);
+      const isAsk = u.searchParams.get("ask") === "1";
+      $("#modePill").innerHTML = isAsk
+        ? `<i data-lucide="smartphone"></i> režim: účastník`
+        : `<i data-lucide="monitor"></i> režim: prezentér`;
+      lucide.createIcons();
+    }
+
+    function renderQr(){
+      const el = $("#qrcode");
+      el.innerHTML = "";
+      new QRCode(el, {
+        text: participantUrl(),
+        width: 220,
+        height: 220,
+        colorDark: "#020203",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    /**********************
+     * Rendering
+     **********************/
+    function formatTime(ts){
+      const d = new Date(ts);
+      return d.toLocaleString("cs-CZ", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
+    }
+
+    function sortedQuestions(){
+      const qs = [...state.questions];
+      if (state.sort === "new") {
+        qs.sort((a,b) => b.createdAt - a.createdAt);
+      } else {
+        // top = likes desc, then newest
+        qs.sort((a,b) => (b.likes - a.likes) || (b.createdAt - a.createdAt));
+      }
+      return qs;
+    }
+
+    function render(){
+      const list = $("#list");
+      const qs = sortedQuestions();
+      $("#count").textContent = `(${qs.length})`;
+
+      if (!qs.length){
+        list.innerHTML = `
+          <div class="empty">
+            <div style="display:grid; place-items:center; gap:10px;">
+              <div style="width:52px;height:52px;border-radius:18px;background:rgba(224,0,0,0.10);display:grid;place-items:center;">
+                <i data-lucide="sparkles"></i>
+              </div>
+              <div style="font-weight:800;color:var(--kb-black);">Zatím žádné dotazy</div>
+              <div>Povzbuď publikum: „Načtěte QR a napište otázku“</div>
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      list.innerHTML = qs.map(q => {
+        const liked = !!state.likedMap[q.id];
+        const safeName = (q.name && q.name.trim()) ? q.name.trim() : "anonymně";
+        const safeText = q.text || "";
+        return `
+          <article class="q" data-id="${q.id}">
+            <div class="qTop">
+              <p class="qText">${escapeHtml(safeText)}</p>
+              <button class="likeBtn ${liked ? "liked":""}" data-like="${q.id}" type="button" aria-label="Lajknout otázku">
+                <i data-lucide="${liked ? "heart-handshake" : "heart"}"></i>
+                <span class="likeCount">${q.likes}</span>
+              </button>
+            </div>
+            <div class="qMeta">
+              <span class="nameBadge"><i data-lucide="user"></i> ${escapeHtml(safeName)}</span>
+              <span class="dot">•</span>
+              <span><i data-lucide="calendar-clock"></i> ${formatTime(q.createdAt)}</span>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      lucide.createIcons();
+
+      // hook up like buttons
+      document.querySelectorAll("[data-like]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-like");
+          likeQuestion(id);
+        }, { passive: true });
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    /**********************
+     * Likes + add question
+     **********************/
+    function likeQuestion(id){
+      if (state.likedMap[id]) {
+        toast("Už máš like u této otázky 🙂");
+        return;
+      }
+      const q = state.questions.find(x => x.id === id);
+      if (!q) return;
+
+      q.likes = (q.likes || 0) + 1;
+      state.likedMap[id] = true;
+
+      saveQuestions();
+      saveLikes();
+      render();
+      toast("Like přidán ❤️");
+    }
+
+    function addQuestion(text, name){
+      const q = {
+        id: uid(),
+        text: text.trim(),
+        name: (name || "").trim() || "anonymně",
+        likes: 0,
+        createdAt: Date.now()
+      };
+      state.questions.unshift(q);
+      saveQuestions();
+    }
+
+    /**********************
+     * Modal controls
+     **********************/
+    const backdrop = $("#backdrop");
+    const openAskBtn = $("#openAskBtn");
+    const openParticipantBtn = $("#openParticipantBtn");
+    const copyLinkBtn = $("#copyLinkBtn");
+    const closeBtn = $("#closeBtn");
+    const cancelBtn = $("#cancelBtn");
+    const saveBtn = $("#saveBtn");
+    const qInput = $("#questionInput");
+    const nameInput = $("#nameInput");
+    const errorEl = $("#error");
+    const errorText = $("#errorText");
+    const charCount = $("#charCount");
+
+    function openModal(){
+      errorEl.classList.remove("show");
+      backdrop.classList.add("open");
+      backdrop.setAttribute("aria-hidden", "false");
+      // focus
+      window.setTimeout(() => qInput.focus(), 50);
+    }
+
+    function closeModal(){
+      backdrop.classList.remove("open");
+      backdrop.setAttribute("aria-hidden", "true");
+      qInput.value = "";
+      nameInput.value = "";
+      charCount.textContent = `0 / 280`;
+    }
+
+    function validate(){
+      const text = qInput.value.trim();
+      if (!text) {
+        errorText.textContent = "Vyplň prosím dotaz.";
+        errorEl.classList.add("show");
+        qInput.focus();
+        return false;
+      }
+      if (text.length < 3){
+        errorText.textContent = "Dotaz je moc krátký – zkus to prosím upřesnit.";
+        errorEl.classList.add("show");
+        qInput.focus();
+        return false;
+      }
+      errorEl.classList.remove("show");
+      return true;
+    }
+
+    function onSave(){
+      if (!validate()) return;
+      addQuestion(qInput.value, nameInput.value);
+      render();
+      closeModal();
+      toast("Dotaz uložen ✅");
+    }
+
+    // Close on click outside modal
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
+      if (backdrop.classList.contains("open") && (e.ctrlKey || e.metaKey) && e.key === "Enter") onSave();
+    });
+
+    qInput.addEventListener("input", () => {
+      charCount.textContent = `${qInput.value.length} / 280`;
+    });
+
+    openAskBtn.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    saveBtn.addEventListener("click", onSave);
+
+    // QR click opens modal too
+    $("#qrcode").addEventListener("click", openModal);
+    $("#qrcode").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") openModal();
+    });
+
+    // Sorting
+    $("#sortTop").addEventListener("click", () => {
+      state.sort = "top";
+      $("#sortTop").classList.add("active");
+      $("#sortNew").classList.remove("active");
+      render();
+    });
+
+    $("#sortNew").addEventListener("click", () => {
+      state.sort = "new";
+      $("#sortNew").classList.add("active");
+      $("#sortTop").classList.remove("active");
+      render();
+    });
+
+    // Participant link open/copy
+    openParticipantBtn.addEventListener("click", () => {
+      window.open(participantUrl(), "_blank", "noopener,noreferrer");
+    });
+
+    copyLinkBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(participantUrl());
+        toast("Odkaz zkopírován 📎");
+      } catch {
+        // fallback
+        const tmp = document.createElement("textarea");
+        tmp.value = participantUrl();
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        tmp.remove();
+        toast("Odkaz zkopírován 📎");
+      }
+    });
+
+    /**********************
+     * Boot
+     **********************/
+    function boot(){
+      loadAll();
+      renderQr();
+      setModePill();
+      render();
+      lucide.createIcons();
+
+      // Auto open modal when coming from QR (ask=1)
+      const u = new URL(window.location.href);
+      if (u.searchParams.get("ask") === "1") {
+        $("#subtitle").textContent = "Napiš dotaz a dej like těm nejlepším ❤️";
+        openModal();
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
+``
