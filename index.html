@@ -894,6 +894,8 @@ async function likeQuestion(id){
     state.likedMap[id] = true;
     saveLikes();
 
+    render(); // ✅ okamžitě překreslí ikonku i třídu "liked"
+
     // 4) UI se aktualizuje samo, protože běží onSnapshot() realtime listener
     toast("Like přidán ❤️");
   } catch (e) {
