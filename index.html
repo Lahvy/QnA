@@ -967,14 +967,27 @@ function startRealtimeQuestions(){
       errorEl.classList.remove("show");
       return true;
     }
+function addQuestionToFirestore(text, name){
+  return db.collection(QUESTIONS_COLLECTION).add({
+    text: text.trim(),
+    name: (name || "").trim() || "anonymně",
+    likes: 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+async function onSave(){
+  if (!validate()) return;
 
-    function onSave(){
-      if (!validate()) return;
-      addQuestion(qInput.value, nameInput.value);
-      render();
-      closeModal();
-      toast("Dotaz uložen ✅");
-    }
+  try {
+    await addQuestionToFirestore(qInput.value, nameInput.value);
+    closeModal();
+    toast("Dotaz uložen ✅");
+    // render() není potřeba – onSnapshot si dotaz natáhne a UI překreslí sám
+  } catch (e) {
+    console.error("❌ Firestore write error:", e);
+    toast("Nepodařilo se uložit dotaz (pravděpodobně rules) ❌");
+  }
+}
 
     // Close on click outside modal
     backdrop.addEventListener("click", (e) => {
