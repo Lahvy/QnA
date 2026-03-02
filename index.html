@@ -10,15 +10,17 @@
   <!-- QRCode generator -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
 
+  
   <style>
     :root{
-      --kb-red: #E00000;
-      --kb-black: #020203;
-      --kb-gray: #97A6B6;
+      /* Komerční banka palette (from publicly listed brand colors) */
+      --kb-red: #E00000;   /* primary accent */ /* [1](https://brandfetch.com/kb.cz) */
+      --kb-black: #020203; /* primary text */   /* [1](https://brandfetch.com/kb.cz) */
+      --kb-gray: #97A6B6;  /* secondary */      /* [1](https://brandfetch.com/kb.cz) */
 
       --bg: #F6F7F9;
       --card: #ffffff;
@@ -175,6 +177,18 @@
       margin: 0;
       font-size: 15px;
       letter-spacing: 0.2px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(2,2,3,0.10);
+      background: rgba(255,255,255,0.8);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
     }
 
     .qrBox{
@@ -487,50 +501,14 @@
       text-align: center;
     }
 
-    /* --- Settings dropdown menu (sessions) --- */
-    .menuWrap{ position: relative; display: inline-flex; align-items: center; }
-    .menu{
-      position: absolute;
-      right: 0;
-      top: calc(var(--tap) + 8px);
-      width: min(340px, 88vw);
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(2,2,3,0.12);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(2,2,3,0.20);
-      padding: 10px;
-      display: none;
-      z-index: 80;
-    }
-    .menu.open{ display: block; }
-    .menuHeader{ padding: 8px 8px 10px; }
-    .menuTitle{ font-weight: 900; font-size: 14px; }
-    .menuSub{ color: var(--muted); font-size: 12px; margin-top: 2px; }
-    .menuSection{ padding: 0 8px 10px; display: grid; gap: 8px; }
-    .menuLabel{ font-size: 12px; color: var(--muted); font-weight: 800; }
-    .menuSelect{ height: var(--tap); }
-    .menuDivider{ height: 1px; background: rgba(2,2,3,0.10); margin: 8px 0; }
-
-    .menuItem{
-      width: 100%;
-      height: 44px;
-      border-radius: 12px;
-      border: 1px solid rgba(2,2,3,0.10);
-      background: rgba(255,255,255,0.85);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 0 10px;
-      cursor: pointer;
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: white;
       font-weight: 800;
-    }
-    .menuItem:hover{ border-color: rgba(2,2,3,0.18); }
-    .menuItem:focus-visible{ outline: none; box-shadow: var(--focus); }
-    .menuItem.danger{
-      border-color: rgba(224,0,0,0.18);
-      background: rgba(224,0,0,0.06);
     }
   </style>
 </head>
@@ -543,52 +521,16 @@
           <i data-lucide="messages-square"></i>
         </div>
         <div style="min-width:0">
-          <h1>Q&amp;A Live – dotazy přes QR</h1>
+          <h1>Q&A Live – dotazy přes QR</h1>
+
         </div>
       </div>
 
       <div class="actions">
-        <!-- Settings gear (sessions) -->
-        <div class="menuWrap" id="settingsWrap" style="display:none;">
-          <button class="iconBtn" id="settingsBtn" type="button" aria-label="Nastavení sessions" title="Sessions">
-            <i data-lucide="settings"></i>
-          </button>
-
-          <div class="menu" id="settingsMenu" role="menu" aria-hidden="true">
-            <div class="menuHeader">
-              <div class="menuTitle">Sessions</div>
-              <div class="menuSub" id="activeSessionLabel">Aktivní: –</div>
-            </div>
-
-            <div class="menuSection">
-              <label class="menuLabel" for="sessionSelect">Vybrat session</label>
-              <select id="sessionSelect" class="input menuSelect"></select>
-            </div>
-
-            <div class="menuDivider"></div>
-
-            <button class="menuItem" id="newSessionBtn" type="button" role="menuitem">
-              <i data-lucide="plus"></i>
-              Nová session
-            </button>
-
-            <button class="menuItem" id="resetSessionBtn" type="button" role="menuitem">
-              <i data-lucide="rotate-ccw"></i>
-              Reset session (smazat dotazy)
-            </button>
-
-            <button class="menuItem danger" id="deleteSessionBtn" type="button" role="menuitem">
-              <i data-lucide="trash-2"></i>
-              Smazat session
-            </button>
-          </div>
-        </div>
-
         <button class="btn" id="copyLinkBtn" title="Zkopírovat odkaz pro účastníky">
           <i data-lucide="copy"></i>
           Kopírovat odkaz
         </button>
-
         <button class="btn primary" id="openAskBtn">
           <i data-lucide="plus-circle"></i>
           Položit dotaz
@@ -601,6 +543,7 @@
       <section class="card">
         <div class="cardTitle">
           <h2>QR pro účastníky</h2>
+      
         </div>
 
         <div class="qrBox">
@@ -617,6 +560,8 @@
               Otevřít účastnický link
             </button>
           </div>
+
+
         </div>
       </section>
 
@@ -697,55 +642,123 @@
   </div>
 
   <script>
-    /**********************
-     * Firebase init
-     **********************/
-    const firebaseConfig = {
-      apiKey: "AIzaSyB2-mELtDFfbB8aSHhml-RtNQLQfyX1HmI",
-      authDomain: "qanda-717cd.firebaseapp.com",
-      projectId: "qanda-717cd",
-      storageBucket: "qanda-717cd.firebasestorage.app",
-      messagingSenderId: "696079415742",
-      appId: "1:696079415742:web:5c825b45aeb9859fa0a1ef"
-    };
-
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
 
     /**********************
-     * State + local prefs
+ * Firebase init ()
+ **********************/
+const firebaseConfig = {
+  apiKey: "AIzaSyB2-mELtDFfbB8aSHhml-RtNQLQfyX1HmI",
+  authDomain: "qanda-717cd.firebaseapp.com",
+  projectId: "qanda-717cd",
+  storageBucket: "qanda-717cd.firebasestorage.app",
+  messagingSenderId: "696079415742",
+  appId: "1:696079415742:web:5c825b45aeb9859fa0a1ef"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+console.log("✅ Firebase init OK");
+console.log("ProjectId:", firebase.app().options.projectId);
+console.log("Firestore ready:", !!db);
+
+/**********************
+ * Firestore realtime: načítání dotazů pro všechny
+ **********************/
+const QUESTIONS_COLLECTION = "questions"; // kolekce ve Firestore
+
+function startRealtimeQuestions(){
+  // posloucháme změny v kolekci (realtime)
+  db.collection(QUESTIONS_COLLECTION)
+    .orderBy("createdAt", "desc")
+    .onSnapshot((snapshot) => {
+      state.questions = snapshot.docs.map(doc => {
+        const d = doc.data() || {};
+        const ts = d.createdAt;
+
+        // createdAt může být Firestore Timestamp nebo číslo
+        const createdAt =
+          ts && typeof ts.toMillis === "function" ? ts.toMillis()
+          : (typeof ts === "number" ? ts : Date.now());
+
+        return {
+          id: doc.id,
+          text: d.text || "",
+          name: d.name || "anonymně",
+          likes: typeof d.likes === "number" ? d.likes : 0,
+          createdAt
+        };
+      });
+
+      render(); // přerenderuje UI
+    }, (err) => {
+      console.error("❌ Firestore listener error:", err);
+      toast("Firestore: chyba čtení (pravděpodobně rules) ❌");
+    });
+}
+    
+    /**********************
+     * MVP storage + state
      **********************/
+    const STORAGE_KEY = "qna_questions_v1";
     const LIKES_KEY   = "qna_likes_v1";
     const CLIENT_KEY  = "qna_client_id_v1";
 
     const state = {
-      sort: "top",
+      sort: "top", // "top" | "new"
       questions: [],
-      likedMap: {},
-      clientId: null,
-
-      // sessions
-      sessionId: null,
-      sessions: []
+      likedMap: {}, // { [questionId]: true }
+      clientId: null
     };
 
     const $ = (sel) => document.querySelector(sel);
 
+    // Try to keep multiple tabs in sync (same device).
+    const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("qna_live_channel") : null;
+    if (bc) {
+      bc.onmessage = (e) => {
+        if (e?.data?.type === "sync") {
+          loadAll();
+          render();
+        }
+      };
+    }
+
     function uid() {
       if (crypto && crypto.randomUUID) return crypto.randomUUID();
+      // fallback
       return "id-" + Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
     }
 
     function loadAll(){
+      // client
       state.clientId = localStorage.getItem(CLIENT_KEY) || uid();
       localStorage.setItem(CLIENT_KEY, state.clientId);
 
-      try { state.likedMap = JSON.parse(localStorage.getItem(LIKES_KEY) || "{}") || {}; }
-      catch { state.likedMap = {}; }
+      // liked
+      try {
+        state.likedMap = JSON.parse(localStorage.getItem(LIKES_KEY) || "{}") || {};
+      } catch {
+        state.likedMap = {};
+      }
+
+      // questions
+     // try {
+      //  state.questions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") || [];
+     // } catch {
+     //   state.questions = [];
+    //  }
+    }
+
+    function saveQuestions(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.questions));
+      if (bc) bc.postMessage({ type: "sync" });
     }
 
     function saveLikes(){
       localStorage.setItem(LIKES_KEY, JSON.stringify(state.likedMap));
+      if (bc) bc.postMessage({ type: "sync" });
     }
 
     function toast(msg){
@@ -756,295 +769,17 @@
     }
 
     /**********************
-     * Admin toggle (menu se ukáže jen pro admin)
+     * URL / QR generation
      **********************/
-    function isAdmin(){
-      const u = new URL(window.location.href);
-      return u.searchParams.get("admin") === "1";
-    }
+function participantUrl(){
+  // Jedna společná URL pro všechny (bez režimů)
+  const u = new URL(window.location.href);
+  u.searchParams.delete("ask"); // když by tam někdy zůstal
+  return u.toString();
+}
 
-    /**********************
-     * Sessions (minimální model)
-     * sessions: collection "sessions"
-     * questions: collection "questions" + field sessionId
-     **********************/
-    const QUESTIONS_COLLECTION = "questions";
-    const SESSIONS_COLLECTION  = "sessions";
+   
 
-    function getSessionIdFromUrl(){
-      const u = new URL(window.location.href);
-      return u.searchParams.get("s");
-    }
-
-    function setSessionIdToUrl(id){
-      const u = new URL(window.location.href);
-      u.searchParams.set("s", id);
-      history.replaceState({}, "", u.toString());
-    }
-
-    function participantUrl(){
-      const u = new URL(window.location.href);
-      u.searchParams.delete("ask");
-      u.searchParams.delete("admin"); // publikum neuvidí menu
-      if (state.sessionId) u.searchParams.set("s", state.sessionId);
-      return u.toString();
-    }
-
-    async function createSession(name){
-      const docRef = await db.collection(SESSIONS_COLLECTION).add({
-        name: name || "Nová session",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      return docRef.id;
-    }
-
-    async function ensureSession(){
-      const fromUrl = getSessionIdFromUrl();
-      if (fromUrl) { state.sessionId = fromUrl; return; }
-
-      const snap = await db.collection(SESSIONS_COLLECTION)
-        .orderBy("createdAt", "desc")
-        .limit(1)
-        .get();
-
-      if (!snap.empty) {
-        state.sessionId = snap.docs[0].id;
-        setSessionIdToUrl(state.sessionId);
-        return;
-      }
-
-      state.sessionId = await createSession("Default session");
-      setSessionIdToUrl(state.sessionId);
-    }
-
-    /**********************
-     * Firestore realtime questions (filtered by sessionId)
-     **********************/
-    let unsubQuestions = null;
-
-    function startRealtimeQuestions(){
-      if (!state.sessionId) return;
-
-      if (typeof unsubQuestions === "function") unsubQuestions();
-
-      // Realtime listener for current session. [1](https://firebase.google.com/docs/firestore/security/rules-conditions)
-      unsubQuestions = db.collection(QUESTIONS_COLLECTION)
-        .where("sessionId", "==", state.sessionId)
-        .orderBy("createdAt", "desc")
-        .onSnapshot((snapshot) => {
-          state.questions = snapshot.docs.map(doc => {
-            const d = doc.data() || {};
-            const ts = d.createdAt;
-            const createdAt =
-              ts && typeof ts.toMillis === "function" ? ts.toMillis()
-              : (typeof ts === "number" ? ts : Date.now());
-
-            return {
-              id: doc.id,
-              text: d.text || "",
-              name: d.name || "anonymně",
-              likes: Number.isFinite(Number(d.likes)) ? Number(d.likes) : 0,
-              createdAt
-            };
-          });
-
-          render();
-        }, (err) => {
-          console.error("❌ Firestore listener error:", err);
-          toast("Firestore: chyba čtení (rules nebo index) ❌");
-        });
-    }
-
-    /**********************
-     * Firestore writes
-     **********************/
-    function addQuestionToFirestore(text, name){
-      return db.collection(QUESTIONS_COLLECTION).add({
-        sessionId: state.sessionId,
-        text: text.trim(),
-        name: (name || "").trim() || "anonymně",
-        likes: 0,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-
-    async function likeQuestion(id){
-      if (state.likedMap[id]) {
-        toast("Už máš like u této otázky 🙂");
-        return;
-      }
-
-      try {
-        await db.collection(QUESTIONS_COLLECTION).doc(id).update({
-          likes: firebase.firestore.FieldValue.increment(1)
-        });
-
-        state.likedMap[id] = true;
-        saveLikes();
-        render(); // ikonka hned
-
-        toast("Like přidán ❤️");
-      } catch (e) {
-        console.error("❌ Firestore like error:", e);
-        toast("Like se nepodařil (pravděpodobně rules) ❌");
-      }
-    }
-
-    /**********************
-     * Deleting questions by session ( batches. [4](https://docs.cloud.google.com/firestore/native/docs/query-data/listen)
-     **********************/
-    async function deleteQuestionsBySession(sessionId){
-      const batchSize = 200;
-      let lastDoc = null;
-
-      while (true) {
-        let q = db.collection(QUESTIONS_COLLECTION)
-          .where("sessionId", "==", sessionId)
-          .orderBy(firebase.firestore.FieldPath.documentId())
-          .limit(batchSize);
-
-        if (lastDoc) q = q.startAfter(lastDoc);
-
-        const snap = await q.get();
-        if (snap.empty) break;
-
-        const batch = db.batch();
-        snap.docs.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-
-        lastDoc = snap.docs[snap.docs.length - 1];
-      }
-    }
-
-    async function deleteSession(sessionId){
-      await deleteQuestionsBySession(sessionId);
-      await db.collection(SESSIONS_COLLECTION).doc(sessionId).delete();
-    }
-
-    /**********************
-     * Settings menu (gear)
-     **********************/
-    let unsubSessions = null;
-
-    function initSettingsMenu(){
-      const wrap = document.getElementById("settingsWrap");
-      const btn  = document.getElementById("settingsBtn");
-      const menu = document.getElementById("settingsMenu");
-
-      if (!isAdmin()) {
-        wrap.style.display = "none";
-        return;
-      }
-      wrap.style.display = "inline-flex";
-
-      function open(){ menu.classList.add("open"); menu.setAttribute("aria-hidden","false"); }
-      function close(){ menu.classList.remove("open"); menu.setAttribute("aria-hidden","true"); }
-
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        menu.classList.contains("open") ? close() : open();
-        lucide.createIcons();
-      });
-
-      document.addEventListener("click", (e) => {
-        if (!menu.classList.contains("open")) return;
-        if (wrap.contains(e.target)) return;
-        close();
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") close();
-      });
-    }
-
-    function startRealtimeSessions(){
-      if (!isAdmin()) return;
-
-      const select = document.getElementById("sessionSelect");
-      const label  = document.getElementById("activeSessionLabel");
-
-      if (typeof unsubSessions === "function") unsubSessions();
-
-      unsubSessions = db.collection(SESSIONS_COLLECTION)
-        .orderBy("createdAt","desc")
-        .onSnapshot((snap) => {
-          state.sessions = snap.docs.map(d => ({ id: d.id, ...(d.data()||{}) }));
-
-          select.innerHTML = state.sessions.map(s => {
-            const name = s.name || s.id;
-            const sel = s.id === state.sessionId ? "selected" : "";
-            return `<option value="${s.id}" ${sel}>${name}</option>`;
-          }).join("");
-
-          const active = state.sessions.find(s => s.id === state.sessionId);
-          label.textContent = `Aktivní: ${active?.name || state.sessionId || "–"}`;
-
-          lucide.createIcons();
-        });
-
-      select.addEventListener("change", async () => {
-        state.sessionId = select.value;
-        setSessionIdToUrl(state.sessionId);
-
-        // reset local liked states (lepší UX mezi sessions)
-        state.likedMap = {};
-        saveLikes();
-
-        renderQr();
-        startRealtimeQuestions();
-        toast("Přepnuto ✅");
-      });
-    }
-
-    function bindSessionMenuActions(){
-      if (!isAdmin()) return;
-
-      const newBtn   = document.getElementById("newSessionBtn");
-      const resetBtn = document.getElementById("resetSessionBtn");
-      const delBtn   = document.getElementById("deleteSessionBtn");
-
-      newBtn.addEventListener("click", async () => {
-        const name = prompt("Název nové session:", "Nová session");
-        if (name === null) return;
-
-        const id = await createSession(name);
-        state.sessionId = id;
-        setSessionIdToUrl(id);
-
-        state.likedMap = {};
-        saveLikes();
-
-        renderQr();
-        startRealtimeQuestions();
-        toast("Nová session vytvořena ✨");
-      });
-
-      resetBtn.addEventListener("click", async () => {
-        if (!state.sessionId) return;
-        if (!confirm("Opravdu smazat všechny dotazy v aktuální session?")) return;
-
-        await deleteQuestionsBySession(state.sessionId);
-        toast("Session vymazána ✅");
-      });
-
-      delBtn.addEventListener("click", async () => {
-        if (!state.sessionId) return;
-        if (!confirm("Opravdu smazat celou session včetně dotazů?")) return;
-
-        const toDelete = state.sessionId;
-        await deleteSession(toDelete);
-
-        toast("Session smazána 🗑️");
-
-        await ensureSession();
-        renderQr();
-        startRealtimeQuestions();
-      });
-    }
-
-    /**********************
-     * QR render
-     **********************/
     function renderQr(){
       const el = $("#qrcode");
       el.innerHTML = "";
@@ -1071,18 +806,10 @@
       if (state.sort === "new") {
         qs.sort((a,b) => b.createdAt - a.createdAt);
       } else {
+        // top = likes desc, then newest
         qs.sort((a,b) => (b.likes - a.likes) || (b.createdAt - a.createdAt));
       }
       return qs;
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
     }
 
     function render(){
@@ -1130,12 +857,62 @@
 
       lucide.createIcons();
 
+      // hook up like buttons
       document.querySelectorAll("[data-like]").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-like");
           likeQuestion(id);
         }, { passive: true });
       });
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+/**********************
+ * Likes (Firestore realtime)
+ **********************/
+async function likeQuestion(id){
+  // 1) Zabráníme opakovanému like na stejném zařízení (stejně jako dřív)
+  if (state.likedMap[id]) {
+    toast("Už máš like u této otázky 🙂");
+    return;
+  }
+
+  try {
+    // 2) Zapiš +1 do Firestore (atomicky)
+    await db.collection(QUESTIONS_COLLECTION).doc(id).update({
+      likes: firebase.firestore.FieldValue.increment(1)
+    });
+
+    // 3) Lokálně si poznač, že už jsi lajknul (zatím jen per device)
+    state.likedMap[id] = true;
+    saveLikes();
+
+    render(); // ✅ okamžitě překreslí ikonku i třídu "liked"
+
+    // 4) UI se aktualizuje samo, protože běží onSnapshot() realtime listener
+    toast("Like přidán ❤️");
+  } catch (e) {
+    console.error("❌ Firestore like error:", e);
+    toast("Like se nepodařil (pravděpodobně rules) ❌");
+  }
+}
+    function addQuestion(text, name){
+      const q = {
+        id: uid(),
+        text: text.trim(),
+        name: (name || "").trim() || "anonymně",
+        likes: 0,
+        createdAt: Date.now()
+      };
+      state.questions.unshift(q);
+      saveQuestions();
     }
 
     /**********************
@@ -1158,7 +935,8 @@
       errorEl.classList.remove("show");
       backdrop.classList.add("open");
       backdrop.setAttribute("aria-hidden", "false");
-      setTimeout(() => qInput.focus(), 50);
+      // focus
+      window.setTimeout(() => qInput.focus(), 50);
     }
 
     function closeModal(){
@@ -1186,21 +964,32 @@
       errorEl.classList.remove("show");
       return true;
     }
+function addQuestionToFirestore(text, name){
+  return db.collection(QUESTIONS_COLLECTION).add({
+    text: text.trim(),
+    name: (name || "").trim() || "anonymně",
+    likes: 0,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+async function onSave(){
+  if (!validate()) return;
 
-    async function onSave(){
-      if (!validate()) return;
+  try {
+    await addQuestionToFirestore(qInput.value, nameInput.value);
+    closeModal();
+    toast("Dotaz uložen ✅");
+    // render() není potřeba – onSnapshot si dotaz natáhne a UI překreslí sám
+  } catch (e) {
+    console.error("❌ Firestore write error:", e);
+    toast("Nepodařilo se uložit dotaz (pravděpodobně rules) ❌");
+  }
+}
 
-      try {
-        await addQuestionToFirestore(qInput.value, nameInput.value);
-        closeModal();
-        toast("Dotaz uložen ✅");
-      } catch (e) {
-        console.error("❌ Firestore write error:", e);
-        toast("Nepodařilo se uložit dotaz (pravděpodobně rules) ❌");
-      }
-    }
-
-    backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeModal(); });
+    // Close on click outside modal
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeModal();
+    });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
@@ -1216,11 +1005,13 @@
     cancelBtn.addEventListener("click", closeModal);
     saveBtn.addEventListener("click", onSave);
 
+    // QR click opens modal too
     $("#qrcode").addEventListener("click", openModal);
     $("#qrcode").addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") openModal();
     });
 
+    // Sorting
     $("#sortTop").addEventListener("click", () => {
       state.sort = "top";
       $("#sortTop").classList.add("active");
@@ -1235,6 +1026,7 @@
       render();
     });
 
+    // Participant link open/copy
     openParticipantBtn.addEventListener("click", () => {
       window.open(participantUrl(), "_blank", "noopener,noreferrer");
     });
@@ -1244,6 +1036,7 @@
         await navigator.clipboard.writeText(participantUrl());
         toast("Odkaz zkopírován 📎");
       } catch {
+        // fallback
         const tmp = document.createElement("textarea");
         tmp.value = participantUrl();
         document.body.appendChild(tmp);
@@ -1257,18 +1050,15 @@
     /**********************
      * Boot
      **********************/
-    async function boot(){
+    function boot(){
       loadAll();
-      await ensureSession();
-
-      initSettingsMenu();
-      startRealtimeSessions();
-      bindSessionMenuActions();
-
       startRealtimeQuestions();
       renderQr();
+    
       render();
       lucide.createIcons();
+
+
     }
 
     boot();
