@@ -667,6 +667,41 @@ const db = firebase.firestore();
 console.log("✅ Firebase init OK");
 console.log("ProjectId:", firebase.app().options.projectId);
 console.log("Firestore ready:", !!db);
+
+/**********************
+ * Firestore realtime: načítání dotazů pro všechny
+ **********************/
+const QUESTIONS_COLLECTION = "questions"; // kolekce ve Firestore
+
+function startRealtimeQuestions(){
+  // posloucháme změny v kolekci (realtime)
+  db.collection(QUESTIONS_COLLECTION)
+    .orderBy("createdAt", "desc")
+    .onSnapshot((snapshot) => {
+      state.questions = snapshot.docs.map(doc => {
+        const d = doc.data() || {};
+        const ts = d.createdAt;
+
+        // createdAt může být Firestore Timestamp nebo číslo
+        const createdAt =
+          ts && typeof ts.toMillis === "function" ? ts.toMillis()
+          : (typeof ts === "number" ? ts : Date.now());
+
+        return {
+          id: doc.id,
+          text: d.text || "",
+          name: d.name || "anonymně",
+          likes: typeof d.likes === "number" ? d.likes : 0,
+          createdAt
+        };
+      });
+
+      render(); // přerenderuje UI
+    }, (err) => {
+      console.error("❌ Firestore listener error:", err);
+      toast("Firestore: chyba čtení (pravděpodobně rules) ❌");
+    });
+}
     
     /**********************
      * MVP storage + state
