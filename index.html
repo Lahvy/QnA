@@ -647,6 +647,26 @@
   </div>
 
   <script>
+
+    /**********************
+ * Firebase init (Firestore)
+ **********************/
+const firebaseConfig = {
+  // ✅ sem vlož config z Firebase Console (Project settings -> Your apps)
+  apiKey: "SEM_DAS_APIKEY",
+  authDomain: "SEM_DAS_AUTHDOMAIN",
+  projectId: "SEM_DAS_PROJECTID",
+  storageBucket: "SEM_DAS_STORAGEBUCKET",
+  messagingSenderId: "SEM_DAS_SENDERID",
+  appId: "SEM_DAS_APPID"
+};
+
+// Inicializace Firebase aplikace
+firebase.initializeApp(firebaseConfig);
+
+// Připojení na Firestore databázi
+const db = firebase.firestore();
+
     /**********************
      * MVP storage + state
      **********************/
