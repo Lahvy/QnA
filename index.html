@@ -649,7 +649,7 @@
   <script>
 
     /**********************
- * Firebase init (Firestore)
+ * Firebase init ()
  **********************/
 const firebaseConfig = {
   apiKey: "AIzaSyB2-mELtDFfbB8aSHhml-RtNQLQfyX1HmI",
@@ -664,7 +664,9 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
-
+console.log("✅ Firebase init OK");
+console.log("ProjectId:", firebase.app().options.projectId);
+console.log("Firestore ready:", !!db);
     /**********************
      * MVP storage + state
      **********************/
