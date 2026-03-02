@@ -515,52 +515,46 @@
 
 <body>
   <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logoMark" aria-hidden="true">
+          <i data-lucide="messages-square"></i>
+        </div>
+        <div style="min-width:0">
+          <h1>Q&A Live – dotazy přes QR</h1>
 
-iv class="brand">
-    <div class="logoMark" aria-hidden="true">
-      <i data-lucide="messages-square"></i>
-    </div>
-    <div style="min-width:0">
-      <h1>Q&A Live – dotazy přes QR</h1>
-    </div>
-  </div>
+        </div>
+      </div>
 
-  <div class="actions actionsColumn">
-    <!-- Sessions dashboard (verze 2: nahoře) -->
-    <div class="sessionBar" id="sessionBar" style="display:flex;">
-      <select id="sessionSelect" class="input sessionSelect"></select>
+      <div class="actions">
+        <button class="btn" id="copyLinkBtn" title="Zkopírovat odkaz pro účastníky">
+          <i data-lucide="copy"></i>
+          Kopírovat odkaz
+        </button>
+        <button class="btn primary" id="openAskBtn">
+          <i data-lucide="plus-circle"></i>
+          Položit dotaz
+        </button>
+      </div>
+      <div class="sessionBar" id="sessionBar" style="display:flex; gap:10px; align-items:center;">
+  <select id="sessionSelect" class="input" style="height:48px; max-width:280px;"></select>
 
-      <button class="btn" id="newSessionBtn" type="button">
-        <i data-lucide="plus"></i>
-        Nová session
-      </button>
+  <button class="btn" id="newSessionBtn" type="button">
+    <i data-lucide="plus"></i>
+    Nová session
+  </button>
 
-      <button class="btn" id="resetSessionBtn" type="button">
-        <i data-lucide="rotate-ccw"></i>
-        Reset (smazat dotazy)
-      </button>
+  <button class="btn" id="resetSessionBtn" type="button">
+    <i data-lucide="rotate-ccw"></i>
+    Reset (smazat dotazy)
+  </button>
 
-      <button class="btn" id="deleteSessionBtn" type="button">
-        <i data-lucide="trash-2"></i>
-        Smazat session
-      </button>
-    </div>
-
-    <!-- Akce (dole) -->
-    <div class="actionRow">
-      <button class="btn" id="copyLinkBtn" title="Zkopírovat odkaz pro účastníky">
-        <i data-lucide="copy"></i>
-        Kopírovat odkaz
-      </button>
-
-      <button class="btn primary" id="openAskBtn">
-        <i data-lucide="plus-circle"></i>
-        Položit dotaz
-      </button>
-    </div>
-  </div>
-</header>
-
+  <button class="btn" id="deleteSessionBtn" type="button">
+    <i data-lucide="trash-2"></i>
+    Smazat session
+  </button>
+</div>
+    </header>
 
     <div class="grid">
       <!-- Left: QR -->
