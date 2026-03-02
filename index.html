@@ -564,9 +564,7 @@
             </button>
           </div>
 
-          <div class="mutedSmall" style="text-align:center;">
-            Tip: Uložení dotazu <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span>
-          </div>
+
         </div>
       </section>
 
@@ -885,27 +883,33 @@ function startRealtimeQuestions(){
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
+/**********************
+ * Likes (Firestore realtime)
+ **********************/
+async function likeQuestion(id){
+  // 1) Zabráníme opakovanému like na stejném zařízení (stejně jako dřív)
+  if (state.likedMap[id]) {
+    toast("Už máš like u této otázky 🙂");
+    return;
+  }
 
-    /**********************
-     * Likes + add question
-     **********************/
-    function likeQuestion(id){
-      if (state.likedMap[id]) {
-        toast("Už máš like u této otázky 🙂");
-        return;
-      }
-      const q = state.questions.find(x => x.id === id);
-      if (!q) return;
+  try {
+    // 2) Zapiš +1 do Firestore (atomicky)
+    await db.collection(QUESTIONS_COLLECTION).doc(id).update({
+      likes: firebase.firestore.FieldValue.increment(1)
+    });
 
-      q.likes = (q.likes || 0) + 1;
-      state.likedMap[id] = true;
+    // 3) Lokálně si poznač, že už jsi lajknul (zatím jen per device)
+    state.likedMap[id] = true;
+    saveLikes();
 
-      saveQuestions();
-      saveLikes();
-      render();
-      toast("Like přidán ❤️");
-    }
-
+    // 4) UI se aktualizuje samo, protože běží onSnapshot() realtime listener
+    toast("Like přidán ❤️");
+  } catch (e) {
+    console.error("❌ Firestore like error:", e);
+    toast("Like se nepodařil (pravděpodobně rules) ❌");
+  }
+}
     function addQuestion(text, name){
       const q = {
         id: uid(),
