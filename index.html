@@ -781,14 +781,7 @@ function participantUrl(){
   return u.toString();
 }
 
-    function setModePill(){
-      const u = new URL(window.location.href);
-      const isAsk = u.searchParams.get("ask") === "1";
-      $("#modePill").innerHTML = isAsk
-        ? `<i data-lucide="smartphone"></i> režim: účastník`
-        : `<i data-lucide="monitor"></i> režim: prezentér`;
-      lucide.createIcons();
-    }
+   
 
     function renderQr(){
       const el = $("#qrcode");
@@ -1062,16 +1055,11 @@ async function onSave(){
       loadAll();
       startRealtimeQuestions();
       renderQr();
-      setModePill();
+    
       render();
       lucide.createIcons();
 
-      // Auto open modal when coming from QR (ask=1)
-      const u = new URL(window.location.href);
-      if (u.searchParams.get("ask") === "1") {
-        $("#subtitle").textContent = "Napiš dotaz a dej like těm nejlepším ❤️";
-        openModal();
-      }
+
     }
 
     boot();
