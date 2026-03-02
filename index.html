@@ -774,11 +774,12 @@ function startRealtimeQuestions(){
     /**********************
      * URL / QR generation
      **********************/
-    function participantUrl(){
-      const u = new URL(window.location.href);
-      u.searchParams.set("ask", "1");
-      return u.toString();
-    }
+function participantUrl(){
+  // Jedna společná URL pro všechny (bez režimů)
+  const u = new URL(window.location.href);
+  u.searchParams.delete("ask"); // když by tam někdy zůstal
+  return u.toString();
+}
 
     function setModePill(){
       const u = new URL(window.location.href);
