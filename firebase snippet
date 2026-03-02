@@ -1,0 +1,19 @@
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2-mELtDFfbB8aSHhml-RtNQLQfyX1HmI",
+    authDomain: "qanda-717cd.firebaseapp.com",
+    projectId: "qanda-717cd",
+    storageBucket: "qanda-717cd.firebasestorage.app",
+    messagingSenderId: "696079415742",
+    appId: "1:696079415742:web:5c825b45aeb9859fa0a1ef"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
