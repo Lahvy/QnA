@@ -1260,10 +1260,11 @@ async function onSave(){
       render();
     });
 
-    // Participant link open/copy
-    openParticipantBtn.addEventListener("click", () => {
-      window.open(participantUrl(), "_blank", "noopener,noreferrer");
-    });
+  // "Položit dotaz" pod QR → otevře modal
+openParticipantBtn?.addEventListener("click", (e) => {
+  e.preventDefault();
+  openModal();
+});
 
     copyLinkBtn.addEventListener("click", async () => {
       try {
