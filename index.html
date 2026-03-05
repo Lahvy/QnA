@@ -1028,7 +1028,7 @@ async function onSave(){
       charCount.textContent = `${qInput.value.length} / 280`;
     });
 
-    openAskBtn.addEventListener("click", openModal);
+    openAskBtn?.addEventListener("click", openModal);
     closeBtn.addEventListener("click", closeModal);
     cancelBtn.addEventListener("click", closeModal);
     saveBtn.addEventListener("click", onSave);
