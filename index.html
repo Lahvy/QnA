@@ -1086,6 +1086,82 @@ document.addEventListener("keydown", (e) => {
     closeMenu();
   }
 });
+
+/**********************
+ * Reset session (mazání dat)
+ **********************/
+async function deleteAllQuestions(){
+  // smaže všechny docs v kolekci QUESTIONS_COLLECTION po dávkách (<=500)
+  const col = db.collection(QUESTIONS_COLLECTION);
+  let totalDeleted = 0;
+
+  while (true) {
+    const snap = await col.limit(500).get();
+    if (snap.empty) break;
+
+    const batch = db.batch();
+    snap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    totalDeleted += snap.size;
+
+    // pojistka proti nekonečné smyčce (teoreticky při paralelním zápisu)
+    if (snap.size < 500) break;
+  }
+
+  return totalDeleted;
+}
+
+async function resetSession(){
+  const ok = window.confirm(
+    "Opravdu chceš RESET SESSION?\n\n" +
+    "Smaže to všechny dotazy ve Firestore (kolekce: " + QUESTIONS_COLLECTION + ").\n" +
+    "Tuto akci nelze vzít zpět."
+  );
+  if (!ok) return;
+
+  try {
+    // UI: zablokuj tlačítko během resetu
+    if (resetSessionBtn) {
+      resetSessionBtn.disabled = true;
+      resetSessionBtn.style.opacity = "0.6";
+      resetSessionBtn.style.cursor = "not-allowed";
+    }
+
+    toast("Mažu dotazy… ⏳");
+
+    const deleted = await deleteAllQuestions();
+
+    // lokální reset likes (a případně i state)
+    state.likedMap = {};
+    saveLikes();
+
+    // Pokud bys chtěl čistit i CLIENT_ID, odkomentuj:
+    // localStorage.removeItem(CLIENT_KEY);
+
+    toast(`Reset hotov ✅ (smazáno: ${deleted})`);
+
+    // render() není nutný – onSnapshot to UI překreslí samo.
+    // Ale nevadí ho zavolat pro okamžitou odezvu:
+    render();
+
+  } catch (e) {
+    console.error("❌ Reset session error:", e);
+    toast("Reset se nepovedl (pravděpodobně Firestore rules) ❌");
+  } finally {
+    if (resetSessionBtn) {
+      resetSessionBtn.disabled = false;
+      resetSessionBtn.style.opacity = "";
+      resetSessionBtn.style.cursor = "";
+    }
+  }
+}
+
+// Klik na "Reset session"
+resetSessionBtn?.addEventListener("click", async () => {
+  closeMenu();
+  await resetSession();
+});
     
     function openModal(){
       errorEl.classList.remove("show");
