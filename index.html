@@ -134,6 +134,35 @@ background: radial-gradient(1000px 500px at 10% 0%, rgba(150,150,150,0.10), tran
     .btn:active{ transform: translateY(0px) scale(0.99); }
     .btn:focus-visible{ outline: none; box-shadow: var(--focus); }
 
+
+    /* Ikonové tlačítko (Nastavení) */
+.btn.iconOnly{
+  width: 42px;          /* velikost tlačítka */
+  height: 42px;
+  padding: 0;           /* žádný vnitřní padding */
+  border-radius: 14px;
+  justify-content: center;
+  gap: 0;               /* žádná mezera pro text */
+}
+
+/* Ikona uvnitř – velikost a zarovnání */
+.btn.iconOnly svg{
+  width: 20px;
+  height: 20px;
+}
+
+/* Volitelné: jemně ztlumit barvu ikony v klidu */
+.btn.iconOnly{
+  color: var(--kb-black);
+}
+
+/* Volitelné: lepší feedback na hover (lehce zvýraznit) */
+.btn.iconOnly:hover{
+  background: rgba(255,255,255,0.92);
+}
+
+
+    
     .btn.primary{
       background: var(--kb-red);
       border-color: transparent;
@@ -531,10 +560,9 @@ background: radial-gradient(1000px 500px at 10% 0%, rgba(150,150,150,0.10), tran
           <i data-lucide="copy"></i>
           Kopírovat odkaz
         </button>
-        <button class="btn primary" id="openAskBtn">
-          <i data-lucide="plus-circle"></i>
-          Položit dotaz
-        </button>
+<button class="btn iconOnly" id="openSettingsBtn" aria-label="Nastavení" title="Nastavení">
+  <i data-lucide="settings"></i>
+</button>
       </div>
     </header>
 
