@@ -987,29 +987,43 @@ function participantUrl(){
  * Likes (Firestore realtime)
  **********************/
 async function likeQuestion(id){
-  // 1) Zabráníme opakovanému like na stejném zařízení (stejně jako dřív)
-  if (state.likedMap[id]) {
-    toast("Už máš like u této otázky 🙂");
-    return;
-  }
+  const alreadyLiked = !!state.likedMap[id];
 
   try {
-    // 2) Zapiš +1 do Firestore (atomicky)
+    // pokud už byl like, tak ho odebereme (-1), jinak přidáme (+1)
+    const delta = alreadyLiked ? -1 : 1;
+
+    // (volitelné) lokální ochrana proti záporným likes v UI
+    const q = state.questions.find(x => x.id === id);
+    if (alreadyLiked && q && q.likes <= 0) {
+      // už je 0 → nemá smysl odečítat
+      delete state.likedMap[id];
+      saveLikes();
+      render();
+      return;
+    }
+
+    // Firestore: atomický increment o +1 / -1
     await db.collection(QUESTIONS_COLLECTION).doc(id).update({
-      likes: firebase.firestore.FieldValue.increment(1)
+      likes: firebase.firestore.FieldValue.increment(delta)
     });
 
-    // 3) Lokálně si poznač, že už jsi lajknul (zatím jen per device)
-    state.likedMap[id] = true;
+    // Lokální toggle stav
+    if (alreadyLiked) {
+      delete state.likedMap[id];
+      toast("Like odebrán 💔");
+    } else {
+      state.likedMap[id] = true;
+      toast("Like přidán ❤️");
+    }
     saveLikes();
 
-    render(); // ✅ okamžitě překreslí ikonku i třídu "liked"
+    // Okamžitý repaint (realtime listener to stejně dorovná)
+    render();
 
-    // 4) UI se aktualizuje samo, protože běží onSnapshot() realtime listener
-    toast("Like přidán ❤️");
   } catch (e) {
-    console.error("❌ Firestore like error:", e);
-    toast("Like se nepodařil (pravděpodobně rules) ❌");
+    console.error("❌ Firestore like toggle error:", e);
+    toast("Nepodařilo se změnit like (pravděpodobně rules) ❌");
   }
 }
     function addQuestion(text, name){
