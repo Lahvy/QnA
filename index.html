@@ -1,25 +1,27 @@
+
 <!doctype html>
 <html lang="cs">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Q&amp;A Live – Dotazy přes QR</title>
+  <title>Q&A Live – Dotazy přes QR</title>
 
   <!-- Lucide (icons) -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- QRCode generator -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
 
+  
   <style>
     :root{
       /* Komerční banka palette (from publicly listed brand colors) */
-      --kb-red: #9e0b0b;   /* primary accent */
-      --kb-black: #020203; /* primary text */
-      --kb-gray: #97A6B6;  /* secondary */
+      --kb-red: #9e0b0b;   /* primary accent */ /* [1](https://brandfetch.com/kb.cz) */
+      --kb-black: #020203; /* primary text */   /* [1](https://brandfetch.com/kb.cz) */
+      --kb-gray: #97A6B6;  /* secondary */      /* [1](https://brandfetch.com/kb.cz) */
 
       --bg: #F6F7F9;
       --card: #ffffff;
@@ -39,9 +41,9 @@
     body{
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1000px 500px at 10% 0%, rgba(150,150,150,0.10), transparent 50%),
-                  radial-gradient(800px 450px at 90% 10%, rgba(151,166,182,0.22), transparent 55%);
-      var(--bg);
+background: radial-gradient(1000px 500px at 10% 0%, rgba(150,150,150,0.10), transparent 50%),
+            radial-gradient(800px 450px at 90% 10%, rgba(151,166,182,0.22), transparent 55%);
+                  var(--bg);
       color: var(--kb-black);
     }
 
@@ -133,29 +135,35 @@
     .btn:active{ transform: translateY(0px) scale(0.99); }
     .btn:focus-visible{ outline: none; box-shadow: var(--focus); }
 
+
     /* Ikonové tlačítko (Nastavení) */
-    .btn.iconOnly{
-      width: 42px;
-      height: 42px;
-      padding: 0;
-      border-radius: 14px;
-      justify-content: center;
-      gap: 0;
-    }
+.btn.iconOnly{
+  width: 42px;          /* velikost tlačítka */
+  height: 42px;
+  padding: 0;           /* žádný vnitřní padding */
+  border-radius: 14px;
+  justify-content: center;
+  gap: 0;               /* žádná mezera pro text */
+}
 
-    .btn.iconOnly svg{
-      width: 20px;
-      height: 20px;
-    }
+/* Ikona uvnitř – velikost a zarovnání */
+.btn.iconOnly svg{
+  width: 20px;
+  height: 20px;
+}
 
-    .btn.iconOnly{
-      color: var(--kb-black);
-    }
+/* Volitelné: jemně ztlumit barvu ikony v klidu */
+.btn.iconOnly{
+  color: var(--kb-black);
+}
 
-    .btn.iconOnly:hover{
-      background: rgba(255,255,255,0.92);
-    }
+/* Volitelné: lepší feedback na hover (lehce zvýraznit) */
+.btn.iconOnly:hover{
+  background: rgba(255,255,255,0.92);
+}
 
+
+    
     .btn.primary{
       background: var(--kb-red);
       border-color: transparent;
@@ -167,67 +175,71 @@
       box-shadow: 0 10px 22px rgba(120,120,120,0.20);
     }
 
-    /* ===== Settings dropdown menu ===== */
-    .menuAnchor{
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-    }
+/* ===== Settings dropdown menu ===== */
+.menuAnchor{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
 
-    .menu{
-      position: absolute;
-      right: 0;
-      top: calc(100% + 10px);
-      min-width: 220px;
-      padding: 8px;
-      border-radius: 16px;
-      border: 1px solid rgba(2,2,3,0.12);
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 20px 60px rgba(2,2,3,0.18);
-      display: none;
-      z-index: 80;
-    }
+/* menu panel */
+.menu{
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 220px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(2,2,3,0.12);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(2,2,3,0.18);
+  display: none;
+  z-index: 80;
+}
 
-    .menu.open{
-      display: block;
-    }
+/* otevřený stav */
+.menu.open{
+  display: block;
+}
 
-    .menuItem{
-      width: 100%;
-      border: 0;
-      background: transparent;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-weight: 750;
-      color: var(--kb-black);
-      text-align: left;
-    }
+/* položka menu */
+.menuItem{
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 750;
+  color: var(--kb-black);
+  text-align: left;
+}
 
-    .menuItem:hover{
-      background: rgba(224,0,0,0.08);
-    }
+.menuItem:hover{
+  background: rgba(224,0,0,0.08);
+}
 
-    .menuItem:active{
-      transform: scale(0.99);
-    }
+.menuItem:active{
+  transform: scale(0.99);
+}
 
-    .menuItem:focus-visible{
-      outline: none;
-      box-shadow: var(--focus);
-    }
+.menuItem:focus-visible{
+  outline: none;
+  box-shadow: var(--focus);
+}
 
-    .menuItem svg{
-      width: 18px;
-      height: 18px;
-      color: var(--muted);
-    }
-
+/* ikony v menu */
+.menuItem svg{
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+    
     .grid{
       display: grid;
       grid-template-columns: 380px 1fr;
@@ -593,175 +605,6 @@
       color: white;
       font-weight: 800;
     }
-
-    /* =========================
-       VISUAL UPGRADE PATCH
-       (added – nothing else changed)
-    ========================= */
-    :root{
-      --bg2: #EFF1F6;
-      --card2: rgba(255,255,255,0.78);
-      --border2: rgba(2,2,3,0.10);
-      --shadow2: 0 18px 50px rgba(2,2,3,0.14);
-      --shadow3: 0 10px 24px rgba(2,2,3,0.10);
-      --radius-lg: 22px;
-    }
-
-    body{
-      background:
-        radial-gradient(1000px 600px at 15% -10%, rgba(224,0,0,0.10), transparent 55%),
-        radial-gradient(900px 500px at 85% 0%, rgba(151,166,182,0.26), transparent 60%),
-        linear-gradient(180deg, var(--bg2), var(--bg));
-    }
-
-    header{
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      padding: 12px 2px 14px;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      background: linear-gradient(180deg, rgba(246,247,249,0.75), rgba(246,247,249,0.35));
-      border-bottom: 1px solid rgba(2,2,3,0.06);
-    }
-
-    .card{
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border2);
-      background: var(--card2);
-      box-shadow: var(--shadow2);
-    }
-
-    /* session label jako pill (ID zachováno) */
-    #sessionLabel{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      background: rgba(224,0,0,0.08);
-      border: 1px solid rgba(224,0,0,0.18);
-      color: var(--kb-black) !important;
-      font-size: 12px !important;
-      font-weight: 800 !important;
-    }
-
-    .btn{
-      border-radius: 16px;
-      box-shadow: none;
-    }
-
-    .btn.primary{
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--kb-red), #ff3434);
-      box-shadow: 0 14px 30px rgba(158,11,11,0.22);
-    }
-    .btn.primary:hover{
-      background: linear-gradient(135deg, #b10f0f, #ff1f1f);
-      box-shadow: 0 18px 38px rgba(158,11,11,0.28);
-    }
-
-    .btn.iconOnly{
-      border-radius: 16px;
-      background: rgba(255,255,255,0.78);
-    }
-
-    .qrBox{
-      padding: 16px 10px 12px;
-    }
-
-    #qrcode{
-      width: 260px;
-      height: 260px;
-      border-radius: 22px;
-      border: 1px solid rgba(2,2,3,0.10);
-      box-shadow: var(--shadow3);
-      position: relative;
-      overflow: hidden;
-    }
-
-    #qrcode::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background: conic-gradient(from 200deg, rgba(224,0,0,0.20), rgba(151,166,182,0.25), rgba(224,0,0,0.20));
-      filter: blur(14px);
-      opacity: 0.55;
-      pointer-events:none;
-    }
-
-    .list{
-      gap: 10px;
-    }
-
-    .q{
-      border-radius: 18px;
-      background: rgba(255,255,255,0.86);
-      border: 1px solid rgba(2,2,3,0.10);
-      box-shadow: 0 10px 22px rgba(2,2,3,0.06);
-      transition: transform .10s ease, box-shadow .15s ease, border-color .15s ease;
-    }
-    .q:hover{
-      transform: translateY(-1px);
-      border-color: rgba(224,0,0,0.18);
-      box-shadow: 0 16px 34px rgba(2,2,3,0.10);
-    }
-
-    .qText{
-      font-size: 15px;
-      line-height: 1.42;
-      letter-spacing: 0.1px;
-    }
-
-    .likeBtn{
-      border-radius: 999px;
-      height: 40px;
-      background: rgba(2,2,3,0.04);
-    }
-
-    .likeBtn.liked{
-      background: rgba(224,0,0,0.10);
-      border-color: rgba(224,0,0,0.22);
-    }
-
-    /* sticky header v pravé kartě */
-    .card .questionsHeader{
-      position: sticky;
-      top: 76px;
-      z-index: 10;
-      background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.55));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: 10px 6px 10px;
-      margin: -6px -6px 10px;
-      border-bottom: 1px solid rgba(2,2,3,0.06);
-      border-radius: 16px;
-    }
-
-    .modal{
-      border-radius: 24px;
-      box-shadow: 0 26px 80px rgba(2,2,3,0.45);
-    }
-    .modalHeader{
-      padding: 18px 18px 12px;
-    }
-    .modalBody{
-      padding: 16px 18px 18px;
-    }
-    .modalFooter{
-      padding: 14px 18px 18px;
-    }
-
-    textarea, .input{
-      border-radius: 16px;
-      background: rgba(255,255,255,0.92);
-    }
-
-    .toast{
-      background: rgba(2,2,3,0.88);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
   </style>
 </head>
 
@@ -773,47 +616,49 @@
           <i data-lucide="messages-square"></i>
         </div>
         <div style="min-width:0">
-          <h1>Q&amp;A Live</h1>
+          <h1>Q&A Live</h1>
 
-          <p id="sessionLabel" style="margin:2px 0 0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            Session: –
-          </p>
+<p id="sessionLabel" style="margin:2px 0 0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+  Session: –
+</p>
+          
         </div>
       </div>
 
-      <div class="actions">
-        <button class="btn" id="copyLinkBtn" title="Zkopírovat odkaz pro účastníky">
-          <i data-lucide="copy"></i>
-          Odkaz
-        </button>
+<div class="actions">
+  <button class="btn" id="copyLinkBtn" title="Zkopírovat odkaz pro účastníky">
+    <i data-lucide="copy"></i>
+   Odkaz
+  </button>
 
-        <!-- Settings anchor (tlačítko + dropdown menu) -->
-        <div class="menuAnchor">
-          <button class="btn iconOnly" id="openSettingsBtn"
-                  aria-label="Nastavení" title="Nastavení"
-                  aria-haspopup="menu" aria-expanded="false">
-            <i data-lucide="settings"></i>
-          </button>
+  <!-- Settings anchor (tlačítko + dropdown menu) -->
+  <div class="menuAnchor">
+    <button class="btn iconOnly" id="openSettingsBtn"
+            aria-label="Nastavení" title="Nastavení"
+            aria-haspopup="menu" aria-expanded="false">
+      <i data-lucide="settings"></i>
+    </button>
 
-          <div class="menu" id="settingsMenu" role="menu" aria-hidden="true">
+   <div class="menu" id="settingsMenu" role="menu" aria-hidden="true">
 
-            <button class="menuItem" id="changeSessionBtn" type="button" role="menuitem">
-              <i data-lucide="repeat-2"></i>
-              Change session
-            </button>
+  <button class="menuItem" id="changeSessionBtn" type="button" role="menuitem">
+    <i data-lucide="repeat-2"></i>
+    Change session
+  </button>
 
-            <button class="menuItem" id="newSessionBtn" type="button" role="menuitem">
-              <i data-lucide="plus-circle"></i>
-              New session
-            </button>
+  <button class="menuItem" id="newSessionBtn" type="button" role="menuitem">
+    <i data-lucide="plus-circle"></i>
+    New session
+  </button>
 
-            <button class="menuItem" id="resetSessionBtn" type="button" role="menuitem">
-              <i data-lucide="rotate-ccw"></i>
-              Reset session (current)
-            </button>
-          </div>
-        </div>
-      </div>
+  <button class="menuItem" id="resetSessionBtn" type="button" role="menuitem">
+    <i data-lucide="rotate-ccw"></i>
+    Reset session (current)
+  </button>
+</div>
+  </div>
+</div>
+
     </header>
 
     <div class="grid">
@@ -821,6 +666,7 @@
       <section class="card">
         <div class="cardTitle">
           <h2>QR pro účastníky</h2>
+      
         </div>
 
         <div class="qrBox">
@@ -832,11 +678,15 @@
           </div>
 
           <div class="linkRow">
-            <button class="btn primary" id="openParticipantBtn" title="Otevře účastnický link v nové záložce">
-              <i data-lucide="message-square"></i>
-              Položit dotaz
-            </button>
+
+<button class="btn primary" id="openParticipantBtn" title="Otevře účastnický link v nové záložce">
+  <i data-lucide="message-square"></i>
+  Položit dotaz
+</button>
+
           </div>
+
+
         </div>
       </section>
 
@@ -915,8 +765,6 @@
     <i data-lucide="check-circle-2"></i>
     <span id="toastText">Hotovo</span>
   </div>
-
-  <!-- ✅ SEM nech beze změny svůj původní <script>...</script> -->
 
   <script>
 
