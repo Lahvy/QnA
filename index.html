@@ -909,6 +909,7 @@ const state = {
 function participantUrl(){
   const u = new URL(window.location.href);
   u.searchParams.delete("ask");
+  u.searchParams.delete("admin"); // ✅ aby QR/odkaz nikdy nenesl admin režim
   if (state.sessionId) u.searchParams.set("s", state.sessionId);
   return u.toString();
 }
@@ -1084,6 +1085,12 @@ async function likeQuestion(id){
 /**********************
  * Settings menu (dropdown)
  **********************/
+
+// Admin-only: schovej ⚙️ pokud není ?admin=1
+const isAdmin = new URL(location.href).searchParams.get("admin") === "1";
+const settingsAnchor = document.querySelector(".menuAnchor");
+if (settingsAnchor) settingsAnchor.style.display = isAdmin ? "" : "none";
+  
 const openSettingsBtn = $("#openSettingsBtn");
 const settingsMenu    = $("#settingsMenu");
 const resetSessionBtn = $("#resetSessionBtn");
