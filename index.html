@@ -617,6 +617,10 @@ background: radial-gradient(1000px 500px at 10% 0%, rgba(150,150,150,0.10), tran
         <div style="min-width:0">
           <h1>Q&A Live</h1>
 
+<p id="sessionLabel" style="margin:2px 0 0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+  Session: –
+</p>
+          
         </div>
       </div>
 
@@ -634,12 +638,23 @@ background: radial-gradient(1000px 500px at 10% 0%, rgba(150,150,150,0.10), tran
       <i data-lucide="settings"></i>
     </button>
 
-    <div class="menu" id="settingsMenu" role="menu" aria-hidden="true">
-      <button class="menuItem" id="resetSessionBtn" type="button" role="menuitem">
-        <i data-lucide="rotate-ccw"></i>
-        Reset session
-      </button>
-    </div>
+   <div class="menu" id="settingsMenu" role="menu" aria-hidden="true">
+
+  <button class="menuItem" id="changeSessionBtn" type="button" role="menuitem">
+    <i data-lucide="repeat-2"></i>
+    Change session
+  </button>
+
+  <button class="menuItem" id="newSessionBtn" type="button" role="menuitem">
+    <i data-lucide="plus-circle"></i>
+    New session
+  </button>
+
+  <button class="menuItem" id="resetSessionBtn" type="button" role="menuitem">
+    <i data-lucide="rotate-ccw"></i>
+    Reset session (current)
+  </button>
+</div>
   </div>
 </div>
 
@@ -775,64 +790,88 @@ console.log("Firestore ready:", !!db);
 /**********************
  * Firestore realtime: načítání dotazů pro všechny
  **********************/
-const QUESTIONS_COLLECTION = "questions"; // kolekce ve Firestore
+
 
 function startRealtimeQuestions(){
-  // posloucháme změny v kolekci (realtime)
-  db.collection(QUESTIONS_COLLECTION)
-    .orderBy("createdAt", "desc")
-    .onSnapshot((snapshot) => {
-      state.questions = snapshot.docs.map(doc => {
-        const d = doc.data() || {};
-        const ts = d.createdAt;
+  // zruš předchozí listener (když přepínáš session)
+  if (typeof state._unsubQuestions === "function") {
+    state._unsubQuestions();
+    state._unsubQuestions = null;
+  }
 
-        // createdAt může být Firestore Timestamp nebo číslo
-        const createdAt =
-          ts && typeof ts.toMillis === "function" ? ts.toMillis()
-          : (typeof ts === "number" ? ts : Date.now());
+  if (!state.sessionId) {
+    state.questions = [];
+    render();
+    return;
+  }
 
-        return {
-          id: doc.id,
-          text: d.text || "",
-          name: d.name || "anonymně",
-          likes: typeof d.likes === "number" ? d.likes : 0,
-          createdAt
-        };
-      });
+  const q = db.collection(QUESTIONS_COLLECTION)
+    .where("sessionId", "==", state.sessionId)
+    .orderBy("createdAt", "desc");
 
-      render(); // přerenderuje UI
-    }, (err) => {
-      console.error("❌ Firestore listener error:", err);
-      toast("Firestore: chyba čtení (pravděpodobně rules) ❌");
+  state._unsubQuestions = q.onSnapshot((snapshot) => {
+    state.questions = snapshot.docs.map(doc => {
+      const d = doc.data() || {};
+      const ts = d.createdAt;
+      const createdAt =
+        ts && typeof ts.toMillis === "function" ? ts.toMillis()
+        : (typeof ts === "number" ? ts : Date.now());
+
+      return {
+        id: doc.id,
+        text: d.text || "",
+        name: d.name || "anonymně",
+        likes: typeof d.likes === "number" ? d.likes : 0,
+        createdAt,
+        sessionId: d.sessionId
+      };
     });
-}
-    
-    /**********************
-     * MVP storage + state
-     **********************/
-    const STORAGE_KEY = "qna_questions_v1";
-    const LIKES_KEY   = "qna_likes_v1";
-    const CLIENT_KEY  = "qna_client_id_v1";
 
-    const state = {
-      sort: "top", // "top" | "new"
-      questions: [],
-      likedMap: {}, // { [questionId]: true }
-      clientId: null
-    };
+    render();
+  }, (err) => {
+    console.error("❌ Firestore listener error:", err);
+    toast("Firestore: chyba čtení (rules nebo index) ❌");
+  });
+}
+/**********************
+ * MVP storage + state
+ **********************/
+const STORAGE_KEY = "qna_questions_v1"; // už nevyužíváš pro otázky (Firestore realtime)
+const LIKES_KEY   = "qna_likes_v1";
+const CLIENT_KEY  = "qna_client_id_v1";
+const SESSION_KEY = "qna_active_session_v1";
+
+const SESSIONS_COLLECTION  = "sessions";
+const QUESTIONS_COLLECTION = "questions";
+
+
+
+const state = {
+  sort: "top",
+  questions: [],
+  likedMap: {},
+  clientId: null,
+  sessionId: null,
+  sessionName: null,
+  _unsubQuestions: null
+};
 
     const $ = (sel) => document.querySelector(sel);
 
     // Try to keep multiple tabs in sync (same device).
     const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("qna_live_channel") : null;
-    if (bc) {
-      bc.onmessage = (e) => {
-        if (e?.data?.type === "sync") {
-          loadAll();
-          render();
-        }
-      };
+ if (bc) {
+  bc.onmessage = (e) => {
+    if (e?.data?.type === "sync") {
+      try {
+        state.likedMap = JSON.parse(localStorage.getItem(likesStorageKey()) || "{}") || {};
+      } catch {
+        state.likedMap = {};
+      }
+      render();
     }
+  };
+}
 
     function uid() {
       if (crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -841,24 +880,10 @@ function startRealtimeQuestions(){
     }
 
     function loadAll(){
-      // client
-      state.clientId = localStorage.getItem(CLIENT_KEY) || uid();
-      localStorage.setItem(CLIENT_KEY, state.clientId);
-
-      // liked
-      try {
-        state.likedMap = JSON.parse(localStorage.getItem(LIKES_KEY) || "{}") || {};
-      } catch {
-        state.likedMap = {};
-      }
-
-      // questions
-     // try {
-      //  state.questions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") || [];
-     // } catch {
-     //   state.questions = [];
-    //  }
-    }
+  state.clientId = localStorage.getItem(CLIENT_KEY) || uid();
+  localStorage.setItem(CLIENT_KEY, state.clientId);
+  // likedMap se načítá per-session v setActiveSession()
+}  
 
     function saveQuestions(){
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.questions));
@@ -866,9 +891,10 @@ function startRealtimeQuestions(){
     }
 
     function saveLikes(){
-      localStorage.setItem(LIKES_KEY, JSON.stringify(state.likedMap));
-      if (bc) bc.postMessage({ type: "sync" });
-    }
+  localStorage.setItem(likesStorageKey(), JSON.stringify(state.likedMap));
+  if (bc) bc.postMessage({ type: "sync" });
+}
+
 
     function toast(msg){
       $("#toastText").textContent = msg;
@@ -881,11 +907,12 @@ function startRealtimeQuestions(){
      * URL / QR generation
      **********************/
 function participantUrl(){
-  // Jedna společná URL pro všechny (bez režimů)
   const u = new URL(window.location.href);
-  u.searchParams.delete("ask"); // když by tam někdy zůstal
+  u.searchParams.delete("ask");
+  if (state.sessionId) u.searchParams.set("s", state.sessionId);
   return u.toString();
 }
+
 
    
 
@@ -1060,6 +1087,58 @@ async function likeQuestion(id){
 const openSettingsBtn = $("#openSettingsBtn");
 const settingsMenu    = $("#settingsMenu");
 const resetSessionBtn = $("#resetSessionBtn");
+const changeSessionBtn = $("#changeSessionBtn");
+const newSessionBtn    = $("#newSessionBtn");
+
+    async function uiNewSession(){
+  closeMenu();
+  const name = window.prompt("Název nové session:", "Přednáška 1");
+  if (!name || !name.trim()) return;
+
+  try {
+    const created = await createSession(name);
+    toast("Session vytvořena ✅");
+    await setActiveSession(created.id);
+  } catch (e) {
+    console.error("❌ create session error:", e);
+    toast("Nepodařilo se vytvořit session ❌");
+  }
+}
+
+async function uiChangeSession(){
+  closeMenu();
+
+  try {
+    const sessions = await listSessions();
+    if (!sessions.length) {
+      toast("Žádná session neexistuje – vytvoř novou ✅");
+      return;
+    }
+
+    const lines = sessions.map((s, i) => {
+      const mark = (s.id === state.sessionId) ? " (aktuální)" : "";
+      return `${i+1}) ${s.name || s.id}${mark}`;
+    }).join("\n");
+
+    const answer = window.prompt(
+      "Vyber session (napiš číslo):\n\n" + lines,
+      "1"
+    );
+
+    const idx = Number(answer) - 1;
+    if (!Number.isFinite(idx) || idx < 0 || idx >= sessions.length) return;
+
+    await setActiveSession(sessions[idx].id);
+    toast("Session přepnuta ✅");
+
+  } catch (e) {
+    console.error("❌ change session error:", e);
+    toast("Nepodařilo se načíst sessions ❌");
+  }
+}
+
+newSessionBtn?.addEventListener("click", uiNewSession);
+changeSessionBtn?.addEventListener("click", uiChangeSession);
 
 function openMenu(){
   if (!settingsMenu || !openSettingsBtn) return;
@@ -1106,13 +1185,16 @@ document.addEventListener("keydown", (e) => {
 /**********************
  * Reset session (mazání dat)
  **********************/
-async function deleteAllQuestions(){
-  // smaže všechny docs v kolekci QUESTIONS_COLLECTION po dávkách (<=500)
+async function deleteAllQuestionsInSession(sessionId){
   const col = db.collection(QUESTIONS_COLLECTION);
   let totalDeleted = 0;
 
   while (true) {
-    const snap = await col.limit(500).get();
+    const snap = await col
+      .where("sessionId", "==", sessionId)
+      .limit(500)
+      .get();
+
     if (snap.empty) break;
 
     const batch = db.batch();
@@ -1120,8 +1202,6 @@ async function deleteAllQuestions(){
     await batch.commit();
 
     totalDeleted += snap.size;
-
-    // pojistka proti nekonečné smyčce (teoreticky při paralelním zápisu)
     if (snap.size < 500) break;
   }
 
@@ -1129,15 +1209,20 @@ async function deleteAllQuestions(){
 }
 
 async function resetSession(){
+  if (!state.sessionId) {
+    toast("Není zvolená session ❌");
+    return;
+  }
+
   const ok = window.confirm(
-    "Opravdu chceš RESET SESSION?\n\n" +
-    "Smaže to všechny dotazy ve Firestore (kolekce: " + QUESTIONS_COLLECTION + ").\n" +
+    "Opravdu chceš RESET CURRENT SESSION?\n\n" +
+    `Session: ${state.sessionName || state.sessionId}\n` +
+    "Smaže to všechny dotazy v této session.\n" +
     "Tuto akci nelze vzít zpět."
   );
   if (!ok) return;
 
   try {
-    // UI: zablokuj tlačítko během resetu
     if (resetSessionBtn) {
       resetSessionBtn.disabled = true;
       resetSessionBtn.style.opacity = "0.6";
@@ -1146,24 +1231,17 @@ async function resetSession(){
 
     toast("Mažu dotazy… ⏳");
 
-    const deleted = await deleteAllQuestions();
+    const deleted = await deleteAllQuestionsInSession(state.sessionId);
 
-    // lokální reset likes (a případně i state)
+    // reset likes pro session
     state.likedMap = {};
     saveLikes();
 
-    // Pokud bys chtěl čistit i CLIENT_ID, odkomentuj:
-    // localStorage.removeItem(CLIENT_KEY);
-
     toast(`Reset hotov ✅ (smazáno: ${deleted})`);
-
-    // render() není nutný – onSnapshot to UI překreslí samo.
-    // Ale nevadí ho zavolat pro okamžitou odezvu:
     render();
-
   } catch (e) {
     console.error("❌ Reset session error:", e);
-    toast("Reset se nepovedl (pravděpodobně Firestore rules) ❌");
+    toast("Reset se nepovedl (rules / index) ❌");
   } finally {
     if (resetSessionBtn) {
       resetSessionBtn.disabled = false;
@@ -1213,13 +1291,16 @@ resetSessionBtn?.addEventListener("click", async () => {
       return true;
     }
 function addQuestionToFirestore(text, name){
+  if (!state.sessionId) throw new Error("Missing sessionId");
   return db.collection(QUESTIONS_COLLECTION).add({
+    sessionId: state.sessionId,
     text: text.trim(),
     name: (name || "").trim() || "anonymně",
     likes: 0,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 }
+
 async function onSave(){
   if (!validate()) return;
 
@@ -1296,21 +1377,123 @@ openParticipantBtn?.addEventListener("click", (e) => {
       }
     });
 
-    /**********************
-     * Boot
-     **********************/
-    function boot(){
-      loadAll();
-      startRealtimeQuestions();
-      renderQr();
-    
-      render();
-      lucide.createIcons();
+
+function likesStorageKey(){
+  return `${LIKES_KEY}__${state.sessionId || "no-session"}`;
+}
+
+function setSessionLabel(){
+  const el = document.querySelector("#sessionLabel");
+  if (!el) return;
+  el.textContent = state.sessionName
+    ? `Session: ${state.sessionName}`
+    : `Session: ${state.sessionId || "–"}`;
+}
+
+function readSessionFromUrl(){
+  const u = new URL(window.location.href);
+  return u.searchParams.get("s"); // ?s=<sessionId>
+}
+
+function writeSessionToUrl(sessionId){
+  const u = new URL(window.location.href);
+  u.searchParams.set("s", sessionId);
+  // nechceme reload – jen změna URL
+  window.history.replaceState({}, "", u.toString());
+}
+
+/** vytvoří session a vrátí {id, name} */
+async function createSession(name){
+  const docRef = await db.collection(SESSIONS_COLLECTION).add({
+    name: name.trim(),
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  return { id: docRef.id, name: name.trim() };
+}
+
+/** načte všechny session (nejnovější nahoře) */
+async function listSessions(){
+  const snap = await db.collection(SESSIONS_COLLECTION)
+    .orderBy("createdAt", "desc")
+    .get();
+
+  return snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
+}
+
+/** načte jednu session dle ID */
+async function getSession(sessionId){
+  const doc = await db.collection(SESSIONS_COLLECTION).doc(sessionId).get();
+  if (!doc.exists) return null;
+  const data = doc.data() || {};
+  return { id: doc.id, ...data };
+}
+
+/** nastaví aktivní session (state + localStorage + URL + restart listeneru) */
+async function setActiveSession(sessionId){
+  state.sessionId = sessionId;
+  localStorage.setItem(SESSION_KEY, sessionId);
+  writeSessionToUrl(sessionId);
+
+  const s = await getSession(sessionId);
+  state.sessionName = s?.name || null;
+  setSessionLabel();
+
+  // likes jsou per-session
+  try {
+    state.likedMap = JSON.parse(localStorage.getItem(likesStorageKey()) || "{}") || {};
+  } catch {
+    state.likedMap = {};
+  }
+
+  // restart realtime listeneru dotazů pro session
+  startRealtimeQuestions();
+
+  // refresh QR + UI
+  renderQr();
+  render();
+}
+
+/** zajistí že nějaká session existuje a je aktivní */
+async function ensureSession(){
+  // 1) URL param má prioritu (účastnický link/QR)
+  const fromUrl = readSessionFromUrl();
+  if (fromUrl) {
+    await setActiveSession(fromUrl);
+    return;
+  }
+
+  // 2) LocalStorage
+  const fromStorage = localStorage.getItem(SESSION_KEY);
+  if (fromStorage) {
+    await setActiveSession(fromStorage);
+    return;
+  }
+
+  // 3) Pokud není nic, zkus použít poslední existující nebo vytvoř první
+  const sessions = await listSessions();
+  if (sessions.length) {
+    await setActiveSession(sessions[0].id);
+    return;
+  }
+
+  const created = await createSession("Session 1");
+  await setActiveSession(created.id);
+}
 
 
-    }
+/**********************
+ * Boot
+ **********************/
+async function boot(){
+  loadAll();
+  await ensureSession();  // nastaví session + spustí startRealtimeQuestions() uvnitř
+  renderQr();
+  render();
+  lucide.createIcons();
+}
 
-    boot();
+boot();
   </script>
 </body>
 </html>
