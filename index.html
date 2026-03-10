@@ -837,7 +837,6 @@ function startRealtimeQuestions(){
 /**********************
  * MVP storage + state
  **********************/
-const STORAGE_KEY = "qna_questions_v1"; // už nevyužíváš pro otázky (Firestore realtime)
 const LIKES_KEY   = "qna_likes_v1";
 const CLIENT_KEY  = "qna_client_id_v1";
 const SESSION_KEY = "qna_active_session_v1";
@@ -885,11 +884,6 @@ const state = {
   localStorage.setItem(CLIENT_KEY, state.clientId);
   // likedMap se načítá per-session v setActiveSession()
 }  
-
-    function saveQuestions(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.questions));
-      if (bc) bc.postMessage({ type: "sync" });
-    }
 
     function saveLikes(){
   localStorage.setItem(likesStorageKey(), JSON.stringify(state.likedMap));
@@ -1055,23 +1049,11 @@ async function likeQuestion(id){
     toast("Nepodařilo se změnit like (pravděpodobně rules) ❌");
   }
 }
-    function addQuestion(text, name){
-      const q = {
-        id: uid(),
-        text: text.trim(),
-        name: (name || "").trim() || "anonymně",
-        likes: 0,
-        createdAt: Date.now()
-      };
-      state.questions.unshift(q);
-      saveQuestions();
-    }
 
     /**********************
      * Modal controls
      **********************/
     const backdrop = $("#backdrop");
-    const openAskBtn = $("#openAskBtn");
     const openParticipantBtn = $("#openParticipantBtn");
     const copyLinkBtn = $("#copyLinkBtn");
     const closeBtn = $("#closeBtn");
@@ -1337,7 +1319,6 @@ async function onSave(){
       charCount.textContent = `${qInput.value.length} / 280`;
     });
 
-    openAskBtn?.addEventListener("click", openModal);
     closeBtn.addEventListener("click", closeModal);
     cancelBtn.addEventListener("click", closeModal);
     saveBtn.addEventListener("click", onSave);
